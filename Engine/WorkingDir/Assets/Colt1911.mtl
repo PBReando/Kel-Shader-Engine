@@ -1,0 +1,18 @@
+# Blender 4.1.1 MTL File: 'None'
+# www.blender.org
+
+newmtl wire_000000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 1
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd 1911_Albedo.png
+map_Pm 1911_Metallic.png
+map_Pr 1911_Roughness.png
+map_Bump 1911_Normal.png

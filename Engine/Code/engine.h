@@ -66,6 +66,7 @@ struct App
     u32 renderToBackBufferShader = 0;
     u32 renderToFrameBufferShader = 0;
     u32 framebufferToQuadShader = 0;
+    u32 PBRToQuadShader = 0;
 
     u32 patricioModel = 0;
     GLuint texturedMeshProgram_uTexture;

@@ -90,7 +90,7 @@ void CalculateBlitVars(in Light light ,out vec3 ambient,out vec3 diffuse, out ve
 
 void main()
 {
-
+	vec4 fragPos = gl_FragCoord;
 	vec4 textureColor = texture(uTexture, vTexCoord);
 	vec4 finalColor = vec4(0.0);
 	
@@ -129,7 +129,7 @@ void main()
 
 	}
 
-	oColor = finalColor;
+	oColor = fragPos;
 }
 
 #endif

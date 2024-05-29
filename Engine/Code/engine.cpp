@@ -217,19 +217,15 @@ void App::ConfigureFrameBuffer(FrameBuffer& aConfigFB)
     const GLuint NUMBER_OF_CA = 3;
 
     //Framebuffer
-    /*for (GLuint i = 0; i < NUMBER_OF_CA; i++)
-    {
-        GLuint colorAttachmentHandle = 0;
-
-        CreateColorAttachment(colorAttachmentHandle);
-
-        aConfigFB.colorAttachment.push_back(colorAttachmentHandle);
-    }*/
 
     aConfigFB.colorAttachment.push_back(CreateTexture());
     aConfigFB.colorAttachment.push_back(CreateTexture(true));
     aConfigFB.colorAttachment.push_back(CreateTexture(true));
     aConfigFB.colorAttachment.push_back(CreateTexture(true));
+    aConfigFB.colorAttachment.push_back(CreateTexture(true)); // Roughness
+    aConfigFB.colorAttachment.push_back(CreateTexture(true)); // Emissive
+    aConfigFB.colorAttachment.push_back(CreateTexture(true)); // Ambient Oclusion
+    aConfigFB.colorAttachment.push_back(CreateTexture(true)); // Metallic
 
     CreateDepthAttachment(aConfigFB.depthHandle);
 
@@ -290,6 +286,7 @@ void Init(App* app)
     app->renderToBackBufferShader = LoadProgram(app, "RENDER_TO_BB.glsl", "RENDER_TO_BB");
     app->renderToFrameBufferShader = LoadProgram(app, "RENDER_TO_FB.glsl", "RENDER_TO_FB");
     app->framebufferToQuadShader = LoadProgram(app, "FB_TO_BB.glsl", "FB_TO_BB");
+    app->PBRToQuadShader = LoadProgram(app, "PBR_TO_BB.glsl", "PBR_TO_BB");
 
     const Program& texturedMeshProgram = app->programs[app->renderToFrameBufferShader];
     app->texturedMeshProgram_uTexture = glGetUniformLocation(texturedMeshProgram.handle, "uTexture");
@@ -297,7 +294,7 @@ void Init(App* app)
     u32 GroundModelIndex = ModelLoader::LoadModel(app, "Assets/Ground.obj");
     u32 SphereModelIndex = ModelLoader::LoadModel(app, "Assets/sphere.obj");
     u32 QuadModelIndex = ModelLoader::LoadModel(app, "Assets/quad.obj");
-    u32 SquidwardModelIndex = ModelLoader::LoadModel(app, "Assets/squidward2.obj");
+    u32 ColtModelIndex = ModelLoader::LoadModel(app, "Assets/Colt1911.obj");
     u32 HollowModelIndex = ModelLoader::LoadModel(app, "Assets/jojoHollow.obj");
     u32 MoonModelIndex = ModelLoader::LoadModel(app, "Assets/moon.obj");
 
@@ -316,24 +313,26 @@ void Init(App* app)
 
     app->localUniformBuffer = CreateConstantBuffer(app->maxUniformBufferSize);
 
-    app->entities.push_back({TransformPositionScale(vec3(0.f, 0.0f, 2.0), vec3(0.45f)),PatrickModelIndex,0,0 });
-    app->entities.push_back({TransformPositionScale(vec3(2.f, 0.0f, 2.0), vec3(0.45f)),PatrickModelIndex,0,0 });
+    app->entities.push_back({TransformPositionScale(vec3(0.f, 0.0f, 2.0), vec3(0.05f)),ColtModelIndex,0,0 });
+    /*app->entities.push_back({TransformPositionScale(vec3(2.f, 0.0f, 2.0), vec3(0.45f)),PatrickModelIndex,0,0});
     app->entities.push_back({ TransformPositionScale(vec3(3.f, -2.0f, 2.0), vec3(0.05f)),SquidwardModelIndex,0,0 });
     app->entities.push_back({ TransformPositionScale(vec3(0.f, -12.0f, -6.0), vec3(0.85f)),HollowModelIndex,0,0 });
     app->entities.push_back({ TransformPositionScale(vec3(0.f, -12.0f, -16.0), vec3(0.85f)),MoonModelIndex,0,0 });
 
-    app->entities.push_back({TransformPositionScale(vec3(0.0, -5.0, 0.0), vec3(1.0, 1.0, 1.0)), GroundModelIndex, 0, 0 });
+    app->entities.push_back({TransformPositionScale(vec3(0.0, -5.0, 0.0), vec3(1.0, 1.0, 1.0)), GroundModelIndex, 0, 0 });*/
 
-    app->AddDirectionalLight(QuadModelIndex, vec3(7.0, 2.0, 3.0), vec3(-1.0, -1.0, 0.0), vec3(1.0, 1.0, 1.0));
+    //app->AddDirectionalLight(QuadModelIndex, vec3(7.0, 2.0, 3.0), vec3(-1.0, -1.0, 0.0), vec3(1.0, 1.0, 1.0));
     app->AddDirectionalLight(QuadModelIndex, vec3(4.0, 1.0, 1.0), vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0));
     app->AddPointLight(SphereModelIndex, vec3(2.0, 1.0, 1.0), vec3(0.0, 1.0, 0.0));
     app->AddPointLight(SphereModelIndex, vec3(-2.0, 1.0, 1.0), vec3(0.0, 1.0, 0.0));
-    app->AddPointLight(SphereModelIndex, vec3(0.0, 2.0, -8.0), vec3(1.0, 1.0, 1.0));
+    /*app->AddPointLight(SphereModelIndex, vec3(0.0, 2.0, -8.0), vec3(1.0, 1.0, 1.0));
     app->AddPointLight(SphereModelIndex, vec3(6.0, 4.0, 5.0), vec3(1.0, 0.0, 0.0));
     app->AddPointLight(SphereModelIndex, vec3(2.0, 2.0, 2.0), vec3(0.0, 0.0, 1.0));
     app->AddPointLight(SphereModelIndex, vec3(0.f, 8.0f, -32.0), vec3(1.0, 0.0, 0.0));
     app->AddPointLight(SphereModelIndex, vec3(13.0f, 8.0f, -37.0), vec3(0.0, 1.0, 0.0));
-    app->AddPointLight(SphereModelIndex, vec3(-10.0f, 7.0f, -37.0), vec3(0.0, 0.0, 1.0));
+    app->AddPointLight(SphereModelIndex, vec3(-10.0f, 7.0f, -37.0), vec3(0.0, 0.0, 1.0));*/
+
+
 
     app->ConfigureFrameBuffer(app->deferredFrameBuffer);
 
@@ -491,6 +490,10 @@ void Render(App* app)
         glBindTexture(GL_TEXTURE_2D, app->deferredFrameBuffer.depthHandle);
         glUniform1i(glGetUniformLocation(FBToBB.handle, "uDepth"), 4);
 
+        glActiveTexture(GL_TEXTURE5);
+        glBindTexture(GL_TEXTURE_2D, app->deferredFrameBuffer.colorAttachment[4]);
+        glUniform1i(glGetUniformLocation(FBToBB.handle, "uRoughness"), 5);
+
         glUniform1i(glGetUniformLocation(FBToBB.handle, "UseNormal"), app->useNormal ? 1 : 0);
         glUniform1i(glGetUniformLocation(FBToBB.handle, "UseDepth"), app->useDepth ? 1 : 0);
 
@@ -554,6 +557,10 @@ void Render(App* app)
         glBindTexture(GL_TEXTURE_2D, app->deferredFrameBuffer.depthHandle);
         glUniform1i(glGetUniformLocation(FBToBB.handle, "uDepth"), 4);
 
+        glActiveTexture(GL_TEXTURE5);
+        glBindTexture(GL_TEXTURE_2D, app->deferredFrameBuffer.colorAttachment[4]);
+        glUniform1i(glGetUniformLocation(FBToBB.handle, "uRoughness"), 5);
+
         glUniform1i(glGetUniformLocation(FBToBB.handle, "UseNormal"), app->useNormal ? 1 : 0);
         glUniform1i(glGetUniformLocation(FBToBB.handle, "UseDepth"), app->useDepth ? 1 : 0);
 
@@ -592,7 +599,7 @@ void Render(App* app)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, app->displaySize.x, app->displaySize.y);
 
-        const Program& FBToBB = app->programs[app->framebufferToQuadShader];
+        const Program& FBToBB = app->programs[app->PBRToQuadShader];
         glUseProgram(FBToBB.handle);
         
         glBindBufferRange(GL_UNIFORM_BUFFER, BINDING(0), app->localUniformBuffer.handle, app->globalParamsOffset, app->globalParamsSize);
@@ -616,6 +623,22 @@ void Render(App* app)
         glActiveTexture(GL_TEXTURE4);
         glBindTexture(GL_TEXTURE_2D, app->deferredFrameBuffer.depthHandle);
         glUniform1i(glGetUniformLocation(FBToBB.handle, "uDepth"), 4);
+
+        glActiveTexture(GL_TEXTURE5);
+        glBindTexture(GL_TEXTURE_2D, app->deferredFrameBuffer.colorAttachment[4]);
+        glUniform1i(glGetUniformLocation(FBToBB.handle, "uRoughness"), 5);
+
+        glActiveTexture(GL_TEXTURE6);
+        glBindTexture(GL_TEXTURE_2D, app->deferredFrameBuffer.colorAttachment[5]);
+        glUniform1i(glGetUniformLocation(FBToBB.handle, "uEmissive"), 6);
+
+        glActiveTexture(GL_TEXTURE7);
+        glBindTexture(GL_TEXTURE_2D, app->deferredFrameBuffer.colorAttachment[6]);
+        glUniform1i(glGetUniformLocation(FBToBB.handle, "uAmbientOclusion"), 7);
+
+        glActiveTexture(GL_TEXTURE8);
+        glBindTexture(GL_TEXTURE_2D, app->deferredFrameBuffer.colorAttachment[7]);
+        glUniform1i(glGetUniformLocation(FBToBB.handle, "uMetallic"), 8);
 
         glUniform1i(glGetUniformLocation(FBToBB.handle, "UseNormal"), app->useNormal ? 1 : 0);
         glUniform1i(glGetUniformLocation(FBToBB.handle, "UseDepth"), app->useDepth ? 1 : 0);
