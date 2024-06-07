@@ -892,7 +892,7 @@ void App::OpenHDRImage(std::string filename)
     int w = 0;
     int h = 0;
     int comp = 0;
-    float* hdrData;
+    float* hdrData = {};
     if (stbi_is_hdr(filename.c_str())) 
     {
         stbi_set_flip_vertically_on_load(true);
