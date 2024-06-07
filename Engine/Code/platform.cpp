@@ -127,6 +127,7 @@ void OnGlfwResizeFramebuffer(GLFWwindow* window, int width, int height)
 {
     App* app = (App*)glfwGetWindowUserPointer(window);
     app->displaySize = vec2(width, height);
+    app->ConfigureFrameBuffer(app->deferredFrameBuffer);
 }
 
 void OnGlfwCloseWindow(GLFWwindow* window)

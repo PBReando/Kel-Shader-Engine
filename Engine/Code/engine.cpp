@@ -261,6 +261,7 @@ void App::ConfigureFrameBuffer(FrameBuffer& aConfigFB)
     const GLuint NUMBER_OF_CA = 3;
 
     //Framebuffer
+    aConfigFB.CleanUpFrameBuffer();
 
     aConfigFB.colorAttachment.push_back(CreateTexture());
     aConfigFB.colorAttachment.push_back(CreateTexture(true));

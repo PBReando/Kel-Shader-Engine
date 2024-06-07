@@ -221,6 +221,25 @@ struct FrameBuffer
     std::vector<GLuint> colorAttachment;
     GLuint fbHandle;
     GLuint depthHandle;
+
+    void CleanUpFrameBuffer()
+    {
+        if (fbHandle)
+        {
+            glDeleteFramebuffers(1, &fbHandle);
+            fbHandle = 0;
+        }
+        for (GLuint texture : colorAttachment)
+        {
+            glDeleteTextures(1, &texture);
+        }
+        colorAttachment.clear();
+        if (depthHandle)
+        {
+            glDeleteRenderbuffers(1, &depthHandle);
+            depthHandle = 0;
+        }
+    }
 };
 
 #define ILOG(...)                 \
