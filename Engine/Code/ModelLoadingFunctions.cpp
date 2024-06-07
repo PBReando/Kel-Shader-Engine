@@ -174,11 +174,13 @@ namespace ModelLoader
         aiColor3D emissiveColor;
         aiColor3D specularColor;
         ai_real shininess;
+        aiColor3D ambientOclusion;
         material->Get(AI_MATKEY_NAME, name);
         material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColor);
         material->Get(AI_MATKEY_COLOR_EMISSIVE, emissiveColor);
         material->Get(AI_MATKEY_COLOR_SPECULAR, specularColor);
         material->Get(AI_MATKEY_SHININESS, shininess);
+        material->Get(AI_MATKEY_COLOR_AMBIENT, ambientOclusion);
 
         myMaterial.name = name.C_Str();
         myMaterial.albedo = vec3(diffuseColor.r, diffuseColor.g, diffuseColor.b);
@@ -220,6 +222,20 @@ namespace ModelLoader
             String filename = MakeString(aiFilename.C_Str());
             String filepath = MakePath(directory, filename);
             myMaterial.bumpTextureIdx = LoadTexture2D(app, filepath.str);
+        }
+        if (material->GetTextureCount(aiTextureType_SHININESS) > 0)
+        {
+            material->GetTexture(aiTextureType_SHININESS, 0, &aiFilename);
+            String filename = MakeString(aiFilename.C_Str());
+            String filepath = MakePath(directory, filename);
+            myMaterial.shininessTextureIdx = LoadTexture2D(app, filepath.str);
+        }
+        if (material->GetTextureCount(aiTextureType_AMBIENT) > 0)
+        {
+            material->GetTexture(aiTextureType_AMBIENT, 0, &aiFilename);
+            String filename = MakeString(aiFilename.C_Str());
+            String filepath = MakePath(directory, filename);
+            myMaterial.ambientOclusionTextureIdx = LoadTexture2D(app, filepath.str);
         }
 
         //myMaterial.createNormalFromBump();

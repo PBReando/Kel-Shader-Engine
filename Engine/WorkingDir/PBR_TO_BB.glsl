@@ -41,11 +41,11 @@ uniform sampler2D uAlbedo;
 uniform sampler2D uNormals;
 uniform sampler2D uPosition;
 uniform sampler2D uViewDir;
-uniform sampler2D uDepth;
 uniform sampler2D uRoughness;
 uniform sampler2D uEmissive;
 uniform sampler2D uAmbientOclusion;
 uniform sampler2D uMetallic;
+uniform sampler2D uDepth;
 
 uniform bool UseDepth;
 uniform bool UseNormal;
@@ -92,7 +92,7 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
     return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
-vec3 PBRLighting(vec3 V,vec3 N,vec3 H,vec3 L,vec3 albedoColor,float roughness)
+vec3 PBRLighting(vec3 V,vec3 N,vec3 H,vec3 L,vec3 albedoColor,vec3 radiance,float roughness,float metallic)
 {
 	vec3 F0 = vec3(0.56,0.57,0.58);
 	float _cosTheta = max(dot(V,H),0.0);
@@ -102,13 +102,15 @@ vec3 PBRLighting(vec3 V,vec3 N,vec3 H,vec3 L,vec3 albedoColor,float roughness)
 	vec3 lambert = albedoColor / PI;
 
 	vec3 cookTorranceNumerator = DistributionGGX(N,H,roughness) * GeometrySmith(N,V,L,roughness) * Ks;
-	float cookTorranceDenominator = 4.0 * max(dot(V,N),0.0) * max(dot(L,N),0.0);
+	float cookTorranceDenominator = 4.0 * max(dot(V,N),0.0) * max(dot(L,N),0.0) +0.0001;
 	cookTorranceDenominator = max(cookTorranceDenominator,0.000001);
-	vec3 cookTorrance = cookTorranceNumerator / cookTorranceDenominator;
+	vec3 specular = cookTorranceNumerator / cookTorranceDenominator;
 
-	vec3 BRDF = Kd * lambert + cookTorrance;
+	Kd *= 1.0 -metallic;
 
-	vec3 lightOut = BRDF * max(dot(L,N),0.0);
+	vec3 BRDF = Kd * lambert + specular;
+
+	vec3 lightOut = BRDF * radiance *max(dot(L,N),0.0);
 
 	return lightOut;
 }
@@ -161,13 +163,15 @@ void main()
 		}
 		Halfway = normalize(V + lightDir);
 
-		LightsAfterPBR += emissive + PBRLighting(V,N,Halfway,lightDir,albedoColor,roughness) * _lightIntensity;		
+		LightsAfterPBR += PBRLighting(V,N,Halfway,lightDir,albedoColor,_lightIntensity,roughness,metallic);		
 
 	}
 
-	vec3 shadowsAO = albedoColor * ambientOclusion;
+	vec3 ambientLight = vec3(0.03) * albedoColor * ambientOclusion;
 
-	oColor = vec4(LightsAfterPBR,1.0);
+	vec3 _color = ambientLight + LightsAfterPBR;
+
+	oColor = vec4(_color,1.0);
 }
 
 #endif

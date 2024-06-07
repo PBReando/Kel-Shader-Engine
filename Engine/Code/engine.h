@@ -69,7 +69,11 @@ struct App
     u32 PBRToQuadShader = 0;
 
     u32 patricioModel = 0;
-    GLuint texturedMeshProgram_uTexture;
+    GLuint texturedMeshProgram_uAlbedo;
+    GLuint texturedMeshProgram_uRoughness;
+    GLuint texturedMeshProgram_uEmissive;
+    GLuint texturedMeshProgram_uAmbientOclusion;
+    GLuint texturedMeshProgram_uMetallic;
     
     // texture indices
     u32 diceTexIdx;

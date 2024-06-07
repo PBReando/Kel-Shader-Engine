@@ -167,7 +167,10 @@ struct Material
     u32             specularTextureIdx;
     u32             normalsTextureIdx;
     u32             bumpTextureIdx;
+    u32             shininessTextureIdx;
+    u32             ambientOclusionTextureIdx;
 };
+
 
 struct Buffer {
     GLsizei size;
