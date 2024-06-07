@@ -124,5 +124,8 @@
     <None Include="WorkingDir\PBR_TO_BB.glsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="WorkingDir\SKYBOX_SHADER.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
