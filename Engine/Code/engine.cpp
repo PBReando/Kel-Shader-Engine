@@ -11,6 +11,50 @@
 #include <stb_image_write.h>
 #include "Globals.h"
 
+float points[] = {
+  -10.0f,  10.0f, -10.0f,
+  -10.0f, -10.0f, -10.0f,
+   10.0f, -10.0f, -10.0f,
+   10.0f, -10.0f, -10.0f,
+   10.0f,  10.0f, -10.0f,
+  -10.0f,  10.0f, -10.0f,
+
+  -10.0f, -10.0f,  10.0f,
+  -10.0f, -10.0f, -10.0f,
+  -10.0f,  10.0f, -10.0f,
+  -10.0f,  10.0f, -10.0f,
+  -10.0f,  10.0f,  10.0f,
+  -10.0f, -10.0f,  10.0f,
+
+   10.0f, -10.0f, -10.0f,
+   10.0f, -10.0f,  10.0f,
+   10.0f,  10.0f,  10.0f,
+   10.0f,  10.0f,  10.0f,
+   10.0f,  10.0f, -10.0f,
+   10.0f, -10.0f, -10.0f,
+
+  -10.0f, -10.0f,  10.0f,
+  -10.0f,  10.0f,  10.0f,
+   10.0f,  10.0f,  10.0f,
+   10.0f,  10.0f,  10.0f,
+   10.0f, -10.0f,  10.0f,
+  -10.0f, -10.0f,  10.0f,
+
+  -10.0f,  10.0f, -10.0f,
+   10.0f,  10.0f, -10.0f,
+   10.0f,  10.0f,  10.0f,
+   10.0f,  10.0f,  10.0f,
+  -10.0f,  10.0f,  10.0f,
+  -10.0f,  10.0f, -10.0f,
+
+  -10.0f, -10.0f, -10.0f,
+  -10.0f, -10.0f,  10.0f,
+   10.0f, -10.0f, -10.0f,
+   10.0f, -10.0f, -10.0f,
+  -10.0f, -10.0f,  10.0f,
+   10.0f, -10.0f,  10.0f
+};
+
 GLuint CreateProgramFromSource(String programSource, const char* shaderName)
 {
     GLchar  infoLogBuffer[1024] = {};
@@ -283,6 +327,8 @@ void Init(App* app)
     glBindVertexArray(0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     
+    app->ConfigureSkybox();
+
     app->renderToBackBufferShader = LoadProgram(app, "RENDER_TO_BB.glsl", "RENDER_TO_BB");
     app->renderToFrameBufferShader = LoadProgram(app, "RENDER_TO_FB.glsl", "RENDER_TO_FB");
     app->framebufferToQuadShader = LoadProgram(app, "FB_TO_BB.glsl", "FB_TO_BB");
@@ -298,6 +344,7 @@ void Init(App* app)
     u32 SphereModelIndex = ModelLoader::LoadModel(app, "Assets/sphere.obj");
     u32 QuadModelIndex = ModelLoader::LoadModel(app, "Assets/quad.obj");
     u32 ColtModelIndex = ModelLoader::LoadModel(app, "Assets/Colt1911.obj");
+    //u32 SkyBoxModelIndex = ModelLoader::LoadModel(app, "Assets/InvertedCube.obj");
 
     //app->diceTexIdx = ModelLoader::LoadTexture2D(app, "dice.png");
 
@@ -315,6 +362,7 @@ void Init(App* app)
     app->localUniformBuffer = CreateConstantBuffer(app->maxUniformBufferSize);
 
     app->entities.push_back({TransformPositionScale(vec3(0.f, 0.0f, 2.0), vec3(0.05f)),ColtModelIndex,0,0 });
+    //app->entities.push_back({TransformPositionScale(vec3(0.f, 0.0f, 0.f), vec3(100)),SkyBoxModelIndex,0,0 });
 
     app->AddDirectionalLight(QuadModelIndex, vec3(4.0, 1.0, 1.0), vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0));
     app->AddPointLight(SphereModelIndex, vec3(2.0, -1.0, 1.0), vec3(0.0, 1.0, 0.0));
@@ -685,6 +733,15 @@ void App::RenderGeometry(const Program& aBindedProgram)
         }
     }
 }
+void App::RenderSkybox(const Program& aBindedProgram)
+{
+    glUseProgram(aBindedProgram.handle);
+    glBindVertexArray(vaoSkyBox);
+    glActiveTexture(GL_TEXTURE0); 
+    glBindTexture(GL_TEXTURE_CUBE_MAP, enviromentMap.enviromentMap->textureID);
+    glDrawArrays(GL_TRIANGLES,0,36);
+    glBindVertexArray(0);
+}
 
 const GLuint App::CreateTexture(const bool isFloatingPoint)
 {
@@ -803,4 +860,71 @@ void App::HandleCameraInput(vec3& yCam)
         cameraPosition += glm::normalize(glm::cross(camFront, yCam)) * cameraSpeed;
 }
 
+unsigned int App::CreateCubeMap(std::vector<std::string> cubeFaces)
+{
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
 
+    int width, height, nrChannels;
+    unsigned char* data;
+    for (unsigned int i = 0; i < cubeFaces.size(); i++)
+    {
+        data = stbi_load(cubeFaces[i].c_str(), &width, &height, &nrChannels, 0);
+        glTexImage2D(
+            GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+            0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
+
+   
+    return textureID;
+}
+void App::OpenHDRImage(std::string filename)
+{
+    int w = 0;
+    int h = 0;
+    int comp = 0;
+    float* hdrData;
+    if (stbi_is_hdr(filename.c_str())) 
+    {
+        stbi_set_flip_vertically_on_load(true);
+        hdrData = stbi_loadf(filename.c_str(), &w, &h, &comp, 0);    
+    }
+
+
+    glGenTextures(1, &enviromentMap.enviromentMap->textureID);
+    glBindTexture(GL_TEXTURE_2D, enviromentMap.enviromentMap->textureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, w, h, 0, GL_RGB, GL_FLOAT, hdrData);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+
+
+    if (hdrData != nullptr)
+    {
+        stbi_image_free(hdrData);
+        hdrData = nullptr;
+    }
+}
+
+void App::ConfigureSkybox()
+{
+    glGenBuffers(1, &vboSkyBox);
+    glBindBuffer(GL_ARRAY_BUFFER, vboSkyBox);
+    glBufferData(GL_ARRAY_BUFFER, 3 * 36 * sizeof(float), &points, GL_STATIC_DRAW);
+
+    glGenVertexArrays(1, &vaoSkyBox);
+    glBindVertexArray(vaoSkyBox);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, vboSkyBox);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+}

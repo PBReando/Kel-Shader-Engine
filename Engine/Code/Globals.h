@@ -204,6 +204,18 @@ struct Light
     //afegir rango per la llum
 };
 
+struct TextureCube
+{
+    GLuint textureID;
+};
+struct EnviromentMap
+{
+    Texture* texture = nullptr;
+    bool needsProcessing = false;
+    TextureCube *enviromentMap = nullptr;
+    TextureCube *irradianceMap = nullptr;
+};
+
 struct FrameBuffer
 {
     std::vector<GLuint> colorAttachment;

@@ -29,6 +29,12 @@ struct App
 
     void HandleCameraInput(vec3& yCam);
 
+    unsigned int CreateCubeMap(std::vector<std::string> faces);
+
+    void OpenHDRImage(std::string file);
+
+    void ConfigureSkybox();
+
     void ConfigureFrameBuffer(FrameBuffer& aConfigFB);
 
     void CreateDepthAttachment(GLuint& depthAttachmentHandle);
@@ -36,6 +42,8 @@ struct App
     void CreateColorAttachment(GLuint& colorAttachmentHandle);
 
     void RenderGeometry(const Program& aBindedProgram);
+
+    void RenderSkybox(const Program& aBindedProgram);
 
     const GLuint CreateTexture(const bool isFloatingPoint = false);
 
@@ -82,6 +90,11 @@ struct App
     u32 normalTexIdx;
     u32 magentaTexIdx;
 
+    //Cubemap faces
+    std::vector<std::string> faces;
+
+    EnviromentMap enviromentMap;
+    
     // Mode
     Mode mode;
 
@@ -95,6 +108,9 @@ struct App
 
     // VAO object to link our screen filling quad with our textured quad shader
     GLuint vao;
+
+    GLuint vboSkyBox;
+    GLuint vaoSkyBox;
 
     std::string openglDebugInfo;
 
