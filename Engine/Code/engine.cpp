@@ -12,47 +12,47 @@
 #include "Globals.h"
 
 float points[] = {
-  -10.0f,  10.0f, -10.0f,
-  -10.0f, -10.0f, -10.0f,
-   10.0f, -10.0f, -10.0f,
-   10.0f, -10.0f, -10.0f,
-   10.0f,  10.0f, -10.0f,
-  -10.0f,  10.0f, -10.0f,
-
-  -10.0f, -10.0f,  10.0f,
-  -10.0f, -10.0f, -10.0f,
-  -10.0f,  10.0f, -10.0f,
-  -10.0f,  10.0f, -10.0f,
-  -10.0f,  10.0f,  10.0f,
-  -10.0f, -10.0f,  10.0f,
-
-   10.0f, -10.0f, -10.0f,
-   10.0f, -10.0f,  10.0f,
-   10.0f,  10.0f,  10.0f,
-   10.0f,  10.0f,  10.0f,
-   10.0f,  10.0f, -10.0f,
-   10.0f, -10.0f, -10.0f,
-
-  -10.0f, -10.0f,  10.0f,
-  -10.0f,  10.0f,  10.0f,
-   10.0f,  10.0f,  10.0f,
-   10.0f,  10.0f,  10.0f,
-   10.0f, -10.0f,  10.0f,
-  -10.0f, -10.0f,  10.0f,
-
-  -10.0f,  10.0f, -10.0f,
-   10.0f,  10.0f, -10.0f,
-   10.0f,  10.0f,  10.0f,
-   10.0f,  10.0f,  10.0f,
-  -10.0f,  10.0f,  10.0f,
-  -10.0f,  10.0f, -10.0f,
-
-  -10.0f, -10.0f, -10.0f,
-  -10.0f, -10.0f,  10.0f,
-   10.0f, -10.0f, -10.0f,
-   10.0f, -10.0f, -10.0f,
-  -10.0f, -10.0f,  10.0f,
-   10.0f, -10.0f,  10.0f
+  -90.0f,  90.0f, -90.0f,
+  -90.0f, -90.0f, -90.0f,
+   90.0f, -90.0f, -90.0f,
+   90.0f, -90.0f, -90.0f,
+   90.0f,  90.0f, -90.0f,
+  -90.0f,  90.0f, -90.0f,
+                   
+  -90.0f, -90.0f,  90.0f,
+  -90.0f, -90.0f, -90.0f,
+  -90.0f,  90.0f, -90.0f,
+  -90.0f,  90.0f, -90.0f,
+  -90.0f,  90.0f,  90.0f,
+  -90.0f, -90.0f,  90.0f,
+                   
+   90.0f, -90.0f, -90.0f,
+   90.0f, -90.0f,  90.0f,
+   90.0f,  90.0f,  90.0f,
+   90.0f,  90.0f,  90.0f,
+   90.0f,  90.0f, -90.0f,
+   90.0f, -90.0f, -90.0f,
+                   
+  -90.0f, -90.0f,  90.0f,
+  -90.0f,  90.0f,  90.0f,
+   90.0f,  90.0f,  90.0f,
+   90.0f,  90.0f,  90.0f,
+   90.0f, -90.0f,  90.0f,
+  -90.0f, -90.0f,  90.0f,
+                   
+  -90.0f,  90.0f, -90.0f,
+   90.0f,  90.0f, -90.0f,
+   90.0f,  90.0f,  90.0f,
+   90.0f,  90.0f,  90.0f,
+  -90.0f,  90.0f,  90.0f,
+  -90.0f,  90.0f, -90.0f,
+                   
+  -90.0f, -90.0f, -90.0f,
+  -90.0f, -90.0f,  90.0f,
+   90.0f, -90.0f, -90.0f,
+   90.0f, -90.0f, -90.0f,
+  -90.0f, -90.0f,  90.0f,
+   90.0f, -90.0f,  90.0f
 };
 
 GLuint CreateProgramFromSource(String programSource, const char* shaderName)
@@ -949,10 +949,14 @@ void App::ConfigureSkybox()
     glGenBuffers(1, &vboSkyBox);
     glBindBuffer(GL_ARRAY_BUFFER, vboSkyBox);
     glBufferData(GL_ARRAY_BUFFER, 3 * 36 * sizeof(float), &points, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glGenVertexArrays(1, &vaoSkyBox);
     glBindVertexArray(vaoSkyBox);
-    glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vboSkyBox);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glEnableVertexAttribArray(0);
+    glBindVertexArray(0);
+
 }

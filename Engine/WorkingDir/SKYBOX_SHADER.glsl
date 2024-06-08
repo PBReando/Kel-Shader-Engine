@@ -6,13 +6,13 @@ layout(location = 0) in vec3 aPosition;
 
 out vec3 vTexCoords;
 
-uniform mat4 projection;
-uniform mat4 view;
+uniform mat4 PID;
+uniform mat4 VID;
 
 void main()
 {
     TexCoords = aPos;
-    gl_Position = projection * view * vec4(aPosition, 1.0);
+    gl_Position = PID * VID * vec4(aPosition, 1.0);
 }
 
 #elif defined(FRAGMENT) ///////////////////////////////////////////////
