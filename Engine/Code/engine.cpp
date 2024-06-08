@@ -330,10 +330,26 @@ void Init(App* app)
     
     app->ConfigureSkybox();
 
+    app->faces =
+    { 
+      "Assets/bluecloud_bk.jpg",
+      "Assets/bluecloud_dn.jpg",
+      "Assets/bluecloud_ft.jpg",
+      "Assets/bluecloud_lf.jpg",
+      "Assets/bluecloud_rt.jpg",
+      "Assets/bluecloud_up.jpg"
+    }; 
+
+    app->enviromentMap.enviromentMap = new TextureCube;
+    app->enviromentMap.irradianceMap = new TextureCube;
+    app->enviromentMap.texture = new Texture;
+
+    app->enviromentMap.enviromentMap->textureID = app->CreateCubeMap(app->faces);
     app->renderToBackBufferShader = LoadProgram(app, "RENDER_TO_BB.glsl", "RENDER_TO_BB");
     app->renderToFrameBufferShader = LoadProgram(app, "RENDER_TO_FB.glsl", "RENDER_TO_FB");
     app->framebufferToQuadShader = LoadProgram(app, "FB_TO_BB.glsl", "FB_TO_BB");
     app->PBRToQuadShader = LoadProgram(app, "PBR_TO_BB.glsl", "PBR_TO_BB");
+    app->SkyboxShader = LoadProgram(app, "SKYBOX_SHADER.glsl", "SKYBOX_SHADER");
 
     const Program& texturedMeshProgram = app->programs[app->renderToFrameBufferShader];
     app->texturedMeshProgram_uAlbedo = glGetUniformLocation(texturedMeshProgram.handle, "uTexture");
@@ -344,7 +360,7 @@ void Init(App* app)
 
     u32 SphereModelIndex = ModelLoader::LoadModel(app, "Assets/sphere.obj");
     u32 QuadModelIndex = ModelLoader::LoadModel(app, "Assets/quad.obj");
-    u32 ColtModelIndex = ModelLoader::LoadModel(app, "Assets/Colt1911.obj");
+    //u32 ColtModelIndex = ModelLoader::LoadModel(app, "Assets/Colt1911.obj");
     //u32 SkyBoxModelIndex = ModelLoader::LoadModel(app, "Assets/InvertedCube.obj");
 
     //app->diceTexIdx = ModelLoader::LoadTexture2D(app, "dice.png");
@@ -362,7 +378,7 @@ void Init(App* app)
 
     app->localUniformBuffer = CreateConstantBuffer(app->maxUniformBufferSize);
 
-    app->entities.push_back({TransformPositionScale(vec3(0.f, 0.0f, 2.0), vec3(0.05f)),ColtModelIndex,0,0 });
+    //app->entities.push_back({TransformPositionScale(vec3(0.f, 0.0f, 2.0), vec3(0.05f)),ColtModelIndex,0,0 });
     //app->entities.push_back({TransformPositionScale(vec3(0.f, 0.0f, 0.f), vec3(100)),SkyBoxModelIndex,0,0 });
 
     app->AddDirectionalLight(QuadModelIndex, vec3(4.0, 1.0, 1.0), vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0));
@@ -627,6 +643,9 @@ void Render(App* app)
         const Program& DeferredProgram = app->programs[app->renderToFrameBufferShader];
         glUseProgram(DeferredProgram.handle);
         app->RenderGeometry(DeferredProgram);
+
+        glUseProgram(0);
+        app->RenderSkybox(app->programs[app->SkyboxShader]);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         //Render to BB from ColorAtt.
@@ -684,6 +703,7 @@ void Render(App* app)
 
         glBindVertexArray(0);
         glUseProgram(0);
+
     }
     break;
 
@@ -737,9 +757,17 @@ void App::RenderGeometry(const Program& aBindedProgram)
 void App::RenderSkybox(const Program& aBindedProgram)
 {
     glUseProgram(aBindedProgram.handle);
-    glBindVertexArray(vaoSkyBox);
-    glActiveTexture(GL_TEXTURE0); 
+    GLuint ViewID = glGetUniformLocation(aBindedProgram.handle, "VID");
+    GLuint ProjectionID = glGetUniformLocation(aBindedProgram.handle, "PID");
+
+    glUniformMatrix4fv(ViewID, 1, GL_FALSE, &View[0][0]);
+    glUniformMatrix4fv(ProjectionID, 1, GL_FALSE, &Projection[0][0]);
+
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, enviromentMap.enviromentMap->textureID);
+
+    glBindVertexArray(vaoSkyBox);
+
     glDrawArrays(GL_TRIANGLES,0,36);
     glBindVertexArray(0);
 }
@@ -792,15 +820,14 @@ void App::UpdateEntityBuffer()
     float aspectRatio = (float)displaySize.x / (float)displaySize.y;
     float znear = 0.1f;
     float zfar = 1000.0f;
-    glm::mat4 projection = glm::perspective(glm::radians(60.0f), aspectRatio, znear, zfar);
+    Projection = glm::perspective(glm::radians(60.0f), aspectRatio, znear, zfar);
 
     vec3 xCam = glm::cross(camFront, vec3(0, 1, 0));
     vec3 yCam = glm::cross(xCam, camFront);
 
     HandleCameraInput(yCam);
 
-    glm::mat4 view = glm::lookAt(cameraPosition, cameraPosition + camFront, yCam);
-
+    View = glm::lookAt(cameraPosition, cameraPosition + camFront, yCam);
 
     u32 cont = 0;
 
@@ -834,7 +861,7 @@ void App::UpdateEntityBuffer()
     {
 
         glm::mat4 world = it->worldMatrix;
-        glm::mat4 WVP = projection * view * world;
+        glm::mat4 WVP = Projection * View * world;
 
         Buffer& localBuffer = localUniformBuffer;
         BufferManager::AlignHead(localBuffer, uniformBlockAlignment);

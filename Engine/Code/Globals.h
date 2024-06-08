@@ -210,10 +210,10 @@ struct TextureCube
 };
 struct EnviromentMap
 {
-    Texture* texture = nullptr;
+    Texture* texture;
     bool needsProcessing = false;
-    TextureCube *enviromentMap = nullptr;
-    TextureCube *irradianceMap = nullptr;
+    TextureCube *enviromentMap;
+    TextureCube *irradianceMap;
 };
 
 struct FrameBuffer

@@ -75,6 +75,7 @@ struct App
     u32 renderToFrameBufferShader = 0;
     u32 framebufferToQuadShader = 0;
     u32 PBRToQuadShader = 0;
+    u32 SkyboxShader = 0;
 
     u32 patricioModel = 0;
     GLuint texturedMeshProgram_uAlbedo;
@@ -92,6 +93,7 @@ struct App
 
     //Cubemap faces
     std::vector<std::string> faces;
+
 
     EnviromentMap enviromentMap;
     
@@ -111,6 +113,9 @@ struct App
 
     GLuint vboSkyBox;
     GLuint vaoSkyBox;
+
+    glm::mat4 View;
+    glm::mat4 Projection;
 
     std::string openglDebugInfo;
 

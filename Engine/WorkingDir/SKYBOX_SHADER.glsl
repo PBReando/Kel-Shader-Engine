@@ -4,39 +4,27 @@
 
 layout(location = 0) in vec3 aPosition;
 
-
-layout(binding = 0,std140) uniform GlobalParams
-{
-	vec3 uCameraPosition;
-	uint uLightCount;
-	Light uLight[16];
-};
-
-layout(binding = 1, std140) uniform LocalParams
-{
-	mat4 uWorldMatrix;
-	mat4 uWorldViewProjectionMatrix;
-};
-
 out vec3 vTexCoords;
 
+uniform mat4 projection;
+uniform mat4 view;
 
 void main()
 {
-
+    TexCoords = aPos;
+    gl_Position = projection * view * vec4(aPosition, 1.0);
 }
 
 #elif defined(FRAGMENT) ///////////////////////////////////////////////
 
-
-in vec3 TexCoords;
-uniform sampler2D uTexture;
 layout(location = 0) out vec4 oColor;
 
+uniform samplerCube skybox;
+in vec3 TexCoords;
 
 void main()
 {
-	oColor = fragPos;
+	 oColor = texture(skybox, TexCoords);
 }
 
 #endif
