@@ -29,13 +29,15 @@ struct App
 
     void HandleCameraInput(vec3& yCam);
 
-    unsigned int CreateCubeMap(std::vector<std::string> faces);
-
-    void OpenHDRImage(std::string file);
+    unsigned int LoadTextureMap(SkyboxType type);
 
     void ConfigureSkybox();
 
+    void EquirectangularToCubemap(const Program& aBindedProgram);
+
     void ConfigureFrameBuffer(FrameBuffer& aConfigFB);
+
+    void ConfigureCaptureFrameBuffer(FrameBuffer& aConfigFB);
 
     void CreateDepthAttachment(GLuint& depthAttachmentHandle);
 
@@ -76,6 +78,7 @@ struct App
     u32 framebufferToQuadShader = 0;
     u32 PBRToQuadShader = 0;
     u32 SkyboxShader = 0;
+    u32 EquirectangularShader = 0;
 
     u32 patricioModel = 0;
     GLuint texturedMeshProgram_uAlbedo;
@@ -93,10 +96,10 @@ struct App
 
     //Cubemap faces
     std::vector<std::string> faces;
-
+    std::string filePath;
 
     EnviromentMap enviromentMap;
-    
+
     // Mode
     Mode mode;
 
@@ -129,6 +132,7 @@ struct App
     GLuint globalParamsSize;
 
     FrameBuffer deferredFrameBuffer;
+    FrameBuffer capturedFrameBuffer;
 
     vec3 camFront = vec3(0.0f, 0.0f, -1.0f);
     vec3 cameraPosition = vec3(0.0, 0.0, 0.0);

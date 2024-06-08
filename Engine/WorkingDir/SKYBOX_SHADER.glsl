@@ -11,7 +11,7 @@ uniform mat4 VID;
 
 void main()
 {
-    TexCoords = aPos;
+    vTexCoords = aPosition;
     gl_Position = PID * VID * vec4(aPosition, 1.0);
 }
 
@@ -20,11 +20,11 @@ void main()
 layout(location = 0) out vec4 oColor;
 
 uniform samplerCube skybox;
-in vec3 TexCoords;
+in vec3 vTexCoords;
 
 void main()
 {
-	 oColor = texture(skybox, TexCoords);
+	 oColor = texture(skybox, vTexCoords);
 }
 
 #endif

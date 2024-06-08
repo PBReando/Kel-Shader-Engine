@@ -51,6 +51,11 @@ enum ButtonState {
     BUTTON_RELEASE
 };
 
+enum SkyboxType {
+    CUBEMAP,
+    EQUIRECTANGULAR
+};
+
 struct Input {
     glm::vec2   mousePos;
     glm::vec2   mouseDelta;
@@ -219,6 +224,7 @@ struct EnviromentMap
 struct FrameBuffer
 {
     std::vector<GLuint> colorAttachment;
+    GLuint rboHandle;
     GLuint fbHandle;
     GLuint depthHandle;
 
@@ -238,6 +244,11 @@ struct FrameBuffer
         {
             glDeleteRenderbuffers(1, &depthHandle);
             depthHandle = 0;
+        }
+        if (rboHandle)
+        {
+            glDeleteRenderbuffers(1, &rboHandle);
+            rboHandle = 0;
         }
     }
 };

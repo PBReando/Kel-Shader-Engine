@@ -127,5 +127,8 @@
     <None Include="WorkingDir\SKYBOX_SHADER.glsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="WorkingDir\EQUIRECTANGULAR_SHADER.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
