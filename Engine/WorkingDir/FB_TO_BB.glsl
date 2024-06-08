@@ -52,6 +52,8 @@ void CalculateBlitVars(in Light light ,out vec3 ambient,out vec3 diffuse, out ve
 	vec3 vViewDir = texture(uViewDir, vTexCoord).xyz;
 	vec3 lightDir = normalize(light.direction);
 
+	vNormal = normalize(vNormal);
+
 	float ambientStrenght = 0.2;
 	ambient = ambientStrenght * light.color;
 
