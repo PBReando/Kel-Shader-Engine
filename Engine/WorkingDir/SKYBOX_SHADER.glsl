@@ -24,7 +24,7 @@ in vec3 vTexCoords;
 
 void main()
 {
-	 oColor = texture(skybox, vTexCoords);
+     oColor = texture(skybox, vTexCoords);
 }
 
 #endif

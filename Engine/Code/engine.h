@@ -31,6 +31,8 @@ struct App
 
     unsigned int LoadTextureMap(SkyboxType type);
 
+    unsigned int LoadHdrImage();
+
     void ConfigureSkybox();
 
     void EquirectangularToCubemap(const Program& aBindedProgram);
@@ -46,6 +48,8 @@ struct App
     void RenderGeometry(const Program& aBindedProgram);
 
     void RenderSkybox(const Program& aBindedProgram);
+
+    void RenderCube();
 
     const GLuint CreateTexture(const bool isFloatingPoint = false);
 
@@ -116,6 +120,9 @@ struct App
 
     GLuint vboSkyBox;
     GLuint vaoSkyBox;
+
+    GLuint vboCubeBox;
+    GLuint vaoCubeBox;
 
     glm::mat4 View;
     glm::mat4 Projection;

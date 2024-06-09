@@ -17,7 +17,7 @@ void main()
 
 #elif defined(FRAGMENT) ///////////////////////////////////////////////
 
-layout(location = 0) out vec4 oColor;
+out vec4 oColor;
 
 uniform sampler2D equirectangularMap;
 in vec3 localPosition;
@@ -34,7 +34,7 @@ vec2 SampleSphericalMap(vec3 v)
 void main()
 {
     vec2 uv = SampleSphericalMap(normalize(localPosition));
-    vec3 color = min(vec3(1000.0), texture(equirectangularMap, uv).rgb);
+    vec3 color = texture(equirectangularMap, uv).rgb;
 	oColor = vec4(color, 1.0);
 }
 

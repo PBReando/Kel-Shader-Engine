@@ -215,7 +215,7 @@ struct TextureCube
 };
 struct EnviromentMap
 {
-    Texture* texture;
+    GLuint textureID;
     bool needsProcessing = false;
     TextureCube *enviromentMap;
     TextureCube *irradianceMap;

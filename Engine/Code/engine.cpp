@@ -306,16 +306,21 @@ void App::ConfigureCaptureFrameBuffer(FrameBuffer& aConfigFB)
     aConfigFB.CleanUpFrameBuffer();
 
     glGenFramebuffers(1, &aConfigFB.fbHandle);
-    glBindFramebuffer(GL_FRAMEBUFFER, aConfigFB.fbHandle);
-
-
-    glGenFramebuffers(1, &aConfigFB.fbHandle);
     glGenRenderbuffers(1, &aConfigFB.rboHandle);
 
     glBindFramebuffer(GL_FRAMEBUFFER, aConfigFB.fbHandle);
     glBindRenderbuffer(GL_RENDERBUFFER, aConfigFB.rboHandle);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, aConfigFB.rboHandle);
+
+    GLenum framebufferStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+    if (framebufferStatus != GL_FRAMEBUFFER_COMPLETE)
+    {
+        int i = 0;
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 }
 
@@ -366,9 +371,21 @@ void Init(App* app)
 
     app->enviromentMap.enviromentMap = new TextureCube;
     app->enviromentMap.irradianceMap = new TextureCube;
-    app->enviromentMap.texture = new Texture;
 
-    app->enviromentMap.enviromentMap->textureID = app->LoadTextureMap(SkyboxType::EQUIRECTANGULAR);
+    app->enviromentMap.textureID = app->LoadTextureMap(SkyboxType::CUBEMAP);
+
+    glGenTextures(1, &app->enviromentMap.enviromentMap->textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, app->enviromentMap.enviromentMap->textureID);
+    for (unsigned int i = 0; i < 6; ++i)
+    {
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 512, 512, 0, GL_RGB, GL_FLOAT, nullptr);
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
     app->renderToBackBufferShader = LoadProgram(app, "RENDER_TO_BB.glsl", "RENDER_TO_BB");
     app->renderToFrameBufferShader = LoadProgram(app, "RENDER_TO_FB.glsl", "RENDER_TO_FB");
     app->framebufferToQuadShader = LoadProgram(app, "FB_TO_BB.glsl", "FB_TO_BB");
@@ -396,6 +413,7 @@ void Init(App* app)
     vertexBufferLayout.stride = 5 * sizeof(float);
 
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
     glEnable(GL_CULL_FACE);
 
     glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &app->maxUniformBufferSize);
@@ -412,6 +430,8 @@ void Init(App* app)
 
     app->ConfigureFrameBuffer(app->deferredFrameBuffer);
     app->ConfigureCaptureFrameBuffer(app->capturedFrameBuffer);
+
+    app->EquirectangularToCubemap(app->programs[app->EquirectangularShader]);
 
     app->mode = Mode_Deferred;
 }
@@ -671,8 +691,8 @@ void Render(App* app)
         app->RenderGeometry(DeferredProgram);
 
         glUseProgram(0);
-        //app->RenderSkybox(app->programs[app->SkyboxShader]);
-        app->EquirectangularToCubemap(app->programs[app->EquirectangularShader]);
+        app->RenderSkybox(app->programs[app->SkyboxShader]);
+
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         //Render to BB from ColorAtt.
@@ -791,7 +811,7 @@ void App::RenderSkybox(const Program& aBindedProgram)
     glUniformMatrix4fv(ProjectionID, 1, GL_FALSE, &Projection[0][0]);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, enviromentMap.enviromentMap->textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, enviromentMap.textureID);
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
     glBindVertexArray(vaoSkyBox);
@@ -800,11 +820,81 @@ void App::RenderSkybox(const Program& aBindedProgram)
     glBindVertexArray(0);
 }
 
+void App::RenderCube()
+{
+    if (vaoCubeBox)
+    {
+
+        float vertices[] = {
+            // back face
+            -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
+             1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
+             1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 0.0f, // bottom-right         
+             1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
+            -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
+            -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 1.0f, // top-left
+            // front face
+            -1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
+             1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f, // bottom-right
+             1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
+             1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
+            -1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 1.0f, // top-left
+            -1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
+            // left face
+            -1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
+            -1.0f,  1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-left
+            -1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
+            -1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
+            -1.0f, -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-right
+            -1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
+            // right face
+             1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
+             1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
+             1.0f,  1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-right         
+             1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
+             1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
+             1.0f, -1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-left     
+             // bottom face
+             -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
+              1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f, // top-left
+              1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
+              1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
+             -1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 0.0f, // bottom-right
+             -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
+             // top face
+             -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
+              1.0f,  1.0f , 1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
+              1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 1.0f, // top-right     
+              1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
+             -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
+             -1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f  // bottom-left        
+        };
+
+        glGenVertexArrays(1, &vaoCubeBox);
+        glGenBuffers(1, &vboCubeBox);
+        // fill buffer
+        glBindBuffer(GL_ARRAY_BUFFER, vboCubeBox);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+        // link vertex attributes
+        glBindVertexArray(vaoCubeBox);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
+    }
+    // render Cube
+    glBindVertexArray(vaoCubeBox);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindVertexArray(0);
+}
+
 void App::EquirectangularToCubemap(const Program& aBindedProgram)
 {
-    glUseProgram(aBindedProgram.handle);
-    GLuint ViewID = glGetUniformLocation(aBindedProgram.handle, "VID");
-    GLuint ProjectionID = glGetUniformLocation(aBindedProgram.handle, "PID");
+
     glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
     glm::mat4 captureViews[] =
     {
@@ -816,30 +906,31 @@ void App::EquirectangularToCubemap(const Program& aBindedProgram)
         glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f))
     };
 
+    glUseProgram(aBindedProgram.handle);
+    GLuint ProjectionID = glGetUniformLocation(aBindedProgram.handle, "PID");
+    glUniformMatrix4fv(ProjectionID, 1, GL_FALSE, glm::value_ptr(captureProjection));
+    GLuint textureLocation = glGetUniformLocation(aBindedProgram.handle, "equirectangularMap");
+    glUniform1i(textureLocation, 0);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, enviromentMap.enviromentMap->textureID);
-    glViewport(0, 0, displaySize.x, displaySize.y);
+    glBindTexture(GL_TEXTURE_2D, enviromentMap.textureID);
+    glViewport(0, 0, 512, 512);
     glBindFramebuffer(GL_FRAMEBUFFER, capturedFrameBuffer.fbHandle);
 
-    glUniformMatrix4fv(ProjectionID, 1, GL_FALSE, &captureProjection[0][0]);
     for (unsigned int i = 0; i < 6; ++i)
     {
-        glUniformMatrix4fv(ViewID, 1, GL_FALSE, &captureViews[i][0][0]);
+        GLuint ViewID = glGetUniformLocation(aBindedProgram.handle, "VID");
+        glUniformMatrix4fv(ViewID, 1, GL_FALSE, glm::value_ptr(captureViews[i]));
         glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, enviromentMap.enviromentMap->textureID,0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-        glBindVertexArray(vaoSkyBox);
-
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glBindVertexArray(0);
+        RenderCube();
 
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    /*glUseProgram(0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, enviromentMap.enviromentMap->textureID);
-    glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+    glGenerateMipmap(GL_TEXTURE_CUBE_MAP);*/
 
-    glUseProgram(0);      
 }
 
 const GLuint App::CreateTexture(const bool isFloatingPoint)
@@ -985,39 +1076,49 @@ unsigned int App::LoadTextureMap(SkyboxType type)
         return textureID;
         break;
     case EQUIRECTANGULAR:
+        stbi_set_flip_vertically_on_load(true);
         int Equiwidth, Equiheight, nrComponents;
-        unsigned char* Equidata = stbi_load(filePath.c_str(), &Equiwidth, &Equiheight, &nrComponents, 0);
-        if (!Equidata)
+        float* Equidata = stbi_loadf("Assets/victoria_sunset_4k.hdr", &Equiwidth, &Equiheight, &nrComponents, 0);
+        unsigned int hdrTexture{};
+        if (Equidata)
         {
-            return 0;
+            glGenTextures(1, &hdrTexture);
+            glBindTexture(GL_TEXTURE_2D, hdrTexture);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, Equiwidth, Equiheight, 0, GL_RGB, GL_FLOAT, Equidata);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+            stbi_image_free(Equidata);
         }
-
-        unsigned int EtextureID;
-        glGenTextures(1, &EtextureID);
-        glBindTexture(GL_TEXTURE_2D, EtextureID);
-
-        GLenum format;
-        if (nrComponents == 1)
-            format = GL_RED;
-        else if (nrComponents == 3)
-            format = GL_RGB;
-        else if (nrComponents == 4)
-            format = GL_RGBA;
-
-        glTexImage2D(GL_TEXTURE_2D, 0, format, Equiwidth, Equiheight, 0, format, GL_UNSIGNED_BYTE, Equidata);
-        glGenerateMipmap(GL_TEXTURE_2D);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        stbi_image_free(Equidata);
-
-        return EtextureID;
+        return hdrTexture;
         break;
     }
    
+}
+
+unsigned int App::LoadHdrImage()
+{
+    stbi_set_flip_vertically_on_load(true);
+    int Equiwidth, Equiheight, nrComponents;
+    float* Equidata = stbi_loadf("Assets/victoria_sunset_4k.hdr", &Equiwidth, &Equiheight, &nrComponents, 0);
+    unsigned int hdrTexture{};
+    if (Equidata)
+    {
+        glGenTextures(1, &hdrTexture);
+        glBindTexture(GL_TEXTURE_2D, hdrTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, Equiwidth, Equiheight, 0, GL_RGB, GL_FLOAT, Equidata);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        stbi_image_free(Equidata);
+    }
+    return hdrTexture;
 }
 
 void App::ConfigureSkybox()
