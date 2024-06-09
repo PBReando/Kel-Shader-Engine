@@ -51,6 +51,8 @@ struct App
 
     void RenderCube();
 
+    void InitCubeVao();
+
     const GLuint CreateTexture(const bool isFloatingPoint = false);
 
     void AddPointLight(u32 modelIndex,vec3 position, vec3 color);
@@ -86,6 +88,7 @@ struct App
 
     u32 patricioModel = 0;
     GLuint texturedMeshProgram_uAlbedo;
+    GLuint texturedMeshProgram_uNormal;
     GLuint texturedMeshProgram_uRoughness;
     GLuint texturedMeshProgram_uEmissive;
     GLuint texturedMeshProgram_uAmbientOclusion;
@@ -141,6 +144,8 @@ struct App
     FrameBuffer deferredFrameBuffer;
     FrameBuffer capturedFrameBuffer;
 
+    std::vector<GLuint> colorAttachmentToBB;
+
     vec3 camFront = vec3(0.0f, 0.0f, -1.0f);
     vec3 cameraPosition = vec3(0.0, 0.0, 0.0);
     float yaw = -90.0f;
@@ -153,6 +158,8 @@ struct App
 };
 
 void Init(App* app);
+
+void CreateEmptyCubeMap(App* app);
 
 void Gui(App* app);
 

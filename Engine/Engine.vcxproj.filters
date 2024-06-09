@@ -130,5 +130,8 @@
     <None Include="WorkingDir\EQUIRECTANGULAR_SHADER.glsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="WorkingDir\BACKGROUND_SHADER.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
