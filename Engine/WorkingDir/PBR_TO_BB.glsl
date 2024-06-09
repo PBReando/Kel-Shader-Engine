@@ -171,8 +171,6 @@ void main()
 
 	vec3 _color = ambientLight + LightsAfterPBR;
 
-	_color = _color / (_color + vec3(1.0));
-    _color = pow(_color, vec3(1.0/2.2));
 
 	oColor = vec4(_color,1.0);
 }
