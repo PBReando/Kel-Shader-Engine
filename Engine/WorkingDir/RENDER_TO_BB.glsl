@@ -71,7 +71,6 @@ in vec3 vViewDir;
 const float PI = 3.1415926535897;
 
 uniform sampler2D uAlbedo;
-uniform sampler2D uNormals;
 uniform sampler2D uRoughness;
 uniform sampler2D uEmissive;
 uniform sampler2D uAmbientOclusion;
@@ -149,9 +148,9 @@ void main()
 	float roughness = texture(uRoughness, vTexCoord).r;
 	float metallic = texture(uMetallic, vTexCoord).r;
 	float ambientOclusion = texture(uAmbientOclusion, vTexCoord).r;
-	vec3 emissive = texture(uEmissive, vTexCoord).xyz;
+	vec3 emissive = texture(uEmissive, vTexCoord).rgb;
 
-	vec3 albedoColor = texture(uAlbedo, vTexCoord).xyz;
+	vec3 albedoColor = texture(uAlbedo, vTexCoord).rgb;
 	vec4 finalColor = vec4(0.0);
 
 	vec3 V = normalize(vViewDir);

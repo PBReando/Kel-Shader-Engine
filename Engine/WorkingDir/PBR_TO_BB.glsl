@@ -117,18 +117,18 @@ vec3 PBRLighting(vec3 V,vec3 N,vec3 H,vec3 L,vec3 albedoColor,vec3 radiance,floa
 
 void main()
 {
-	vec3 fragmentPosition = texture(uPosition, vTexCoord).xyz;
-	vec3 vNormal = texture(uNormals, vTexCoord).xyz;
+	vec3 fragmentPosition = texture(uPosition, vTexCoord).rgb;
+	vec3 vNormal = texture(uNormals, vTexCoord).rgb;
 	vec3 N = normalize(vNormal);
 	float roughness = texture(uRoughness, vTexCoord).r;
 	float metallic = texture(uMetallic, vTexCoord).r;
 	float ambientOclusion = texture(uAmbientOclusion, vTexCoord).r;
-	vec3 emissive = texture(uEmissive, vTexCoord).xyz;
+	vec3 emissive = texture(uEmissive, vTexCoord).rgb;
 
-	vec3 albedoColor = texture(uAlbedo, vTexCoord).xyz;
+	vec3 albedoColor = texture(uAlbedo, vTexCoord).rgb;
 	vec4 finalColor = vec4(0.0);
 
-	vec3 vViewDir = texture(uViewDir, vTexCoord).xyz;
+	vec3 vViewDir = texture(uViewDir, vTexCoord).rgb;
 	vec3 V = normalize(vViewDir);
 	vec3 lightDir = vec3(0.0);
 

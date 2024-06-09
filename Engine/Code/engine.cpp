@@ -390,7 +390,7 @@ void Init(App* app)
     app->enviromentMap.enviromentMap = new TextureCube;
     app->enviromentMap.irradianceMap = new TextureCube;
 
-    app->enviromentMap.textureID = app->LoadTextureMap(SkyboxType::EQUIRECTANGULAR);
+    app->enviromentMap.textureID = app->LoadTextureMap(SkyboxType::CUBEMAP);
 
     CreateEmptyCubeMap(app);
 
@@ -401,8 +401,8 @@ void Init(App* app)
     app->SkyboxShader = LoadProgram(app, "SKYBOX_SHADER.glsl", "SKYBOX_SHADER");
     app->EquirectangularShader = LoadProgram(app, "EQUIRECTANGULAR_SHADER.glsl", "ERECT_SHADER");
 
-    const Program& texturedMeshProgram = app->programs[app->renderToFrameBufferShader];
-    app->texturedMeshProgram_uAlbedo = glGetUniformLocation(texturedMeshProgram.handle, "uTexture");
+    const Program& texturedMeshProgram = app->programs[app->renderToBackBufferShader];
+    app->texturedMeshProgram_uAlbedo = glGetUniformLocation(texturedMeshProgram.handle, "uAlbedo");
     app->texturedMeshProgram_uRoughness = glGetUniformLocation(texturedMeshProgram.handle, "uRoughness");
     app->texturedMeshProgram_uEmissive = glGetUniformLocation(texturedMeshProgram.handle, "uEmissive");
     app->texturedMeshProgram_uAmbientOclusion = glGetUniformLocation(texturedMeshProgram.handle, "uAmbientOclusion");
@@ -555,6 +555,8 @@ void Render(App* app)
         glUseProgram(ForwardProgram.handle);
 
         app->RenderGeometry(ForwardProgram);
+        glUseProgram(0);
+        app->RenderSkybox(app->programs[app->SkyboxShader]);
 
     }
     break;
@@ -808,16 +810,20 @@ void App::RenderGeometry(const Program& aBindedProgram)
             glUniform1i(texturedMeshProgram_uAlbedo, 0);
 
             glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, textures[subMeshMaterial.specularTextureIdx].handle);
-            glUniform1i(texturedMeshProgram_uMetallic, 0);
-
-            glActiveTexture(GL_TEXTURE2);
             glBindTexture(GL_TEXTURE_2D, textures[subMeshMaterial.shininessTextureIdx].handle);
             glUniform1i(texturedMeshProgram_uRoughness, 0);
+
+            glActiveTexture(GL_TEXTURE2);
+            glBindTexture(GL_TEXTURE_2D, textures[subMeshMaterial.emissiveTextureIdx].handle);
+            glUniform1i(texturedMeshProgram_uEmissive, 0);
 
             glActiveTexture(GL_TEXTURE3);
             glBindTexture(GL_TEXTURE_2D, textures[subMeshMaterial.ambientOclusionTextureIdx].handle);
             glUniform1i(texturedMeshProgram_uAmbientOclusion, 0);
+
+            glActiveTexture(GL_TEXTURE4);
+            glBindTexture(GL_TEXTURE_2D, textures[subMeshMaterial.specularTextureIdx].handle);
+            glUniform1i(texturedMeshProgram_uMetallic, 0);
 
             SubMesh& submesh = mesh.submeshes[i];
             glDrawElements(GL_TRIANGLES, submesh.indices.size(), GL_UNSIGNED_INT, (void*)(u64)submesh.indexOffset);
@@ -833,16 +839,16 @@ void App::RenderSkybox(const Program& aBindedProgram)
     glUniformMatrix4fv(ViewID, 1, GL_FALSE, &View[0][0]);
     glUniformMatrix4fv(ProjectionID, 1, GL_FALSE, &Projection[0][0]);
 
-    GLuint skyboxLocation = glGetUniformLocation(aBindedProgram.handle, "skybox");
+    //GLuint skyboxLocation = glGetUniformLocation(aBindedProgram.handle, "skybox");
 
     // Establecer el valor del uniforme al índice de textura 0
-    glUniform1i(skyboxLocation, 0);
+    //glUniform1i(skyboxLocation, 0);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, enviromentMap.enviromentMap->textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, enviromentMap.textureID);
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
-    glBindVertexArray(vaoCubeBox);
+    glBindVertexArray(vaoSkyBox);
 
     glDrawArrays(GL_TRIANGLES,0,36);
     glBindVertexArray(0);

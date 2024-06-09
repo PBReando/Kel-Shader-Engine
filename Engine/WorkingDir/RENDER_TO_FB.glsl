@@ -66,7 +66,7 @@ in vec3 vPosition; // in worldspace
 in vec3 vNormal;  // in worldspace
 in vec3 vViewDir;
 
-uniform sampler2D uTexture;
+uniform sampler2D uAlbedo;
 uniform sampler2D uRoughness;
 uniform sampler2D uEmissive;
 uniform sampler2D uAmbientOclusion;
@@ -85,7 +85,7 @@ layout(location = 7) out vec4 oMetallic;
 void main()
 {
 
-	oAlbedo = texture(uTexture,vTexCoord);
+	oAlbedo = texture(uAlbedo,vTexCoord);
 	oNormals = vec4(vNormal,1.0);
 	oPosition = vec4(vPosition,1.0);
 	oViewDir = vec4(vViewDir,1.0);
