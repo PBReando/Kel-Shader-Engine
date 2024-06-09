@@ -14,3 +14,13 @@
 
 ### PBR and SkyBox
 ![PBR](https://github.com/PBReando/Kel-Shader-Engine/assets/79161220/31c9ce66-6339-4182-a795-df5242c73485)
+
+## Location of Files
+
+### > PBR
+- PBR_TO_BB.glsl (Deferred)
+- RENDER_TO_BB.glsl (Forward)
+### > SkyBox
+- EQUIRECTANGULAR_SHADER.glsl
+- SKYBOX_SHADER.glsl
+- BACKGROUND_SHADER.glsl
